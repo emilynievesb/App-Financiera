@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
         <td data-label="Costo" class="text-end amount">${formatoMoneda(p.costoUnitario)}</td>
         <td data-label="Vence">${p.fechaVencimiento?formatoFecha(p.fechaVencimiento):'-'}</td>
         <td data-label="Alertas">${alertas.join(' ')||'-'}</td>
-        <td data-label=""><button type="button" class="btn btn-sm btn-outline-secondary btn-editar-producto" data-id="${p.id}" title="Editar"><i class="bi bi-pencil"></i></button></td></tr>`;
+        <td><button type="button" class="btn btn-sm btn-outline-secondary btn-editar-producto" data-id="${p.id}" title="Editar"><i class="bi bi-pencil"></i></button></td></tr>`;
     }).join('') : '<tr class="fila-vacia"><td colspan="7" class="estado-vacio"><i class="bi bi-box-seam"></i>Aún no hay productos - crea el primero con "+ Nuevo producto".</td></tr>';
   }
 

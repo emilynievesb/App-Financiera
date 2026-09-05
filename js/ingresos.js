@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           <td data-label="Cliente">${esc(a.clienteNombre)}</td>
           <td data-label="Monto" class="text-end amount amount-positive">${formatoMoneda(a.monto)}</td>
           <td data-label="Método">${badgeMetodo(a.metodoPago)}</td>
-          <td data-label="">${botonEliminar(a.id)}</td></tr>`).join('')
+          <td>${botonEliminar(a.id)}</td></tr>`).join('')
       : '<tr class="fila-vacia"><td colspan="5" class="estado-vacio"><i class="bi bi-receipt"></i>Aún no hay abonos registrados.</td></tr>';
   }
   conectarEliminarFila(document.getElementById('tablaHistorialAbonos'), eliminarAbonoCliente, refrescarTodo, '¿Eliminar este abono? El saldo del cliente volverá a subir.');
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
           <td data-label="Total" class="text-end amount amount-positive">${formatoMoneda(v.total)}</td>
           <td data-label="Método">${badgeMetodo(v.metodoPago)}</td>
           <td data-label="Cliente">${esc(v.clienteNombre||'-')}</td>
-          <td data-label="">${botonEliminar(v.id)}</td></tr>`).join('')
+          <td>${botonEliminar(v.id)}</td></tr>`).join('')
       : '<tr class="fila-vacia"><td colspan="7" class="estado-vacio"><i class="bi bi-receipt"></i>Aún no hay ventas registradas hoy.</td></tr>';
   }
   document.getElementById('btnFiltrarHist').addEventListener('click', refrescarHistorial);

@@ -1,4 +1,6 @@
-const COLOR_INGRESOS = '#1C9A6C', COLOR_COSTO = '#C7920B', COLOR_GASTOS = '#C5432B';
+// Mismos tokens de color que el resto de la app (ver :root en css/styles.css) - Chart.js no puede
+// leer var(--...) directo en un config JS, así que se repiten los hex aquí a mano.
+const COLOR_INGRESOS = '#1C9A6C', COLOR_COSTO = '#8A5E00', COLOR_GASTOS = '#C5432B';
 
 // Flujo de Caja: mide movimiento real de dinero. No usa costo de venta: aquí el criterio es caja,
 // no rentabilidad. `filtroFn` decide qué transacciones cuentan (por tipo de forma de pago, o por
@@ -128,7 +130,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
     const ventasRango = getAll(DB.VENTAS).filter(v=>enRango(v.fecha, rango.desde, rango.hasta));
     const rm = resumenPorMetodo(ventasRango, 'total');
-    const PALETA_METODOS = ['#0B6E4F','#7C5CBF','#2A7F8C','#C7920B','#C5432B','#55645F'];
+    // Misma paleta que el resto de la app - antes tenía un morado y un ámbar que no existen en :root.
+    const PALETA_METODOS = ['#0B6E4F','#8A5E00','#2A7F8C','#C5432B','#55645F','#1C9A6C'];
     const ctxM = document.getElementById('chartMetodos');
     if(chartMetodos) chartMetodos.destroy();
     chartMetodos = new Chart(ctxM, {
