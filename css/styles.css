@@ -1,5 +1,5 @@
 /* =========================================================
-   MiPyme Control — Sistema de diseño
+   MiPyme Control - Sistema de diseño
    Tokens + retint de Bootstrap (mismos componentes, paleta propia)
    ========================================================= */
 :root{
@@ -35,8 +35,11 @@
   --bs-link-color: var(--color-brand);
   --bs-link-hover-color: var(--color-brand-dark);
 
-  --bs-success: var(--color-positive);
-  --bs-success-rgb: 28,154,108;
+  /* --bs-success / --bs-warning son para componentes SOLIDOS (botones, badges, toasts) y deben
+     soportar texto blanco a >=4.5:1; por eso son mas oscuros que --color-positive (texto sobre blanco)
+     y que los tokens -bg-subtle/-text-emphasis (fondos claros de iconos), que no cambian. */
+  --bs-success: #157A55;
+  --bs-success-rgb: 21,122,85;
   --bs-success-text-emphasis: var(--color-brand-dark);
   --bs-success-bg-subtle: #E1F3EA;
   --bs-success-border-subtle: #B9E3CC;
@@ -47,8 +50,8 @@
   --bs-danger-bg-subtle: #FBEAE6;
   --bs-danger-border-subtle: #F0C4B8;
 
-  --bs-warning: #C7920B;
-  --bs-warning-rgb: 199,146,11;
+  --bs-warning: #8A5E00;
+  --bs-warning-rgb: 138,94,0;
   --bs-warning-text-emphasis: #7A5C08;
   --bs-warning-bg-subtle: #FBF1DC;
   --bs-warning-border-subtle: #F0DBA0;
@@ -139,6 +142,9 @@ main.app-main, main.container{ max-width: 640px; }
 .summary-tile.is-total{ grid-column: 1 / -1; background: var(--color-brand); color:#fff; }
 .summary-tile.is-total .summary-tile-label{ color: rgba(255,255,255,.8); }
 .summary-tile.is-total .summary-tile-value{ font-size:2rem; }
+/* Saldo negativo: se cambia el fondo (no el color del texto, que sigue blanco) para mantener buen
+   contraste siempre - un texto "warning" sobre el verde de marca casi no se distinguía. */
+.summary-tile.is-total.is-negative{ background: #8F2F1A; }
 
 /* menu de modulos en home */
 .module-list{ display:flex; flex-direction:column; gap:.55rem; }
@@ -194,15 +200,24 @@ main.app-main, main.container{ max-width: 640px; }
 .btn:active{ transform: scale(.97); }
 .btn-lg{ border-radius: var(--bs-border-radius); }
 
-/* Bootstrap compila .btn-* con hex fijos (no var()) -> se redefinen aquí para heredar la paleta */
+/* Bootstrap compila .btn-* con hex fijos (no var()) -> se redefinen aquí para heredar la paleta.
+   Un solo token de texto para los 6 botones sólidos: siempre blanco (ver nota en :root sobre
+   por qué --bs-success/--bs-warning son más oscuros que su versión "texto sobre blanco"). */
+.btn-primary, .btn-success, .btn-danger, .btn-warning, .btn-info, .btn-secondary{
+  --bs-btn-color:#fff; --bs-btn-hover-color:#fff; --bs-btn-active-color:#fff; --bs-btn-disabled-color:#fff;
+}
 .btn-primary{ --bs-btn-bg:var(--color-brand); --bs-btn-border-color:var(--color-brand); --bs-btn-hover-bg:var(--color-brand-dark); --bs-btn-hover-border-color:var(--color-brand-dark); --bs-btn-active-bg:var(--color-brand-dark); --bs-btn-active-border-color:var(--color-brand-dark); --bs-btn-disabled-bg:var(--color-brand); --bs-btn-disabled-border-color:var(--color-brand); }
-.btn-success{ --bs-btn-bg:var(--color-positive); --bs-btn-border-color:var(--color-positive); --bs-btn-hover-bg:#157a55; --bs-btn-hover-border-color:#157a55; --bs-btn-active-bg:#12684a; --bs-btn-active-border-color:#12684a; --bs-btn-disabled-bg:var(--color-positive); --bs-btn-disabled-border-color:var(--color-positive); }
+.btn-success{ --bs-btn-bg:var(--bs-success); --bs-btn-border-color:var(--bs-success); --bs-btn-hover-bg:#12684a; --bs-btn-hover-border-color:#12684a; --bs-btn-active-bg:#0f573f; --bs-btn-active-border-color:#0f573f; --bs-btn-disabled-bg:var(--bs-success); --bs-btn-disabled-border-color:var(--bs-success); }
 .btn-danger{ --bs-btn-bg:var(--color-negative); --bs-btn-border-color:var(--color-negative); --bs-btn-hover-bg:#a8381f; --bs-btn-hover-border-color:#a8381f; --bs-btn-active-bg:#8f2f1a; --bs-btn-active-border-color:#8f2f1a; --bs-btn-disabled-bg:var(--color-negative); --bs-btn-disabled-border-color:var(--color-negative); }
-.btn-warning{ --bs-btn-bg:#C7920B; --bs-btn-border-color:#C7920B; --bs-btn-color:#12211E; --bs-btn-hover-bg:#A97C09; --bs-btn-hover-border-color:#A97C09; --bs-btn-hover-color:#12211E; --bs-btn-active-bg:#8F6A08; --bs-btn-active-border-color:#8F6A08; --bs-btn-active-color:#12211E; --bs-btn-disabled-bg:#C7920B; --bs-btn-disabled-border-color:#C7920B; }
-.btn-info{ --bs-btn-bg:#2A7F8C; --bs-btn-border-color:#2A7F8C; --bs-btn-color:#fff; --bs-btn-hover-bg:#20636E; --bs-btn-hover-border-color:#20636E; --bs-btn-hover-color:#fff; --bs-btn-active-bg:#1B535C; --bs-btn-active-border-color:#1B535C; --bs-btn-active-color:#fff; --bs-btn-disabled-bg:#2A7F8C; --bs-btn-disabled-border-color:#2A7F8C; }
+.btn-warning{ --bs-btn-bg:var(--bs-warning); --bs-btn-border-color:var(--bs-warning); --bs-btn-hover-bg:#6E4A00; --bs-btn-hover-border-color:#6E4A00; --bs-btn-active-bg:#5C3D00; --bs-btn-active-border-color:#5C3D00; --bs-btn-disabled-bg:var(--bs-warning); --bs-btn-disabled-border-color:var(--bs-warning); }
+.btn-info{ --bs-btn-bg:#2A7F8C; --bs-btn-border-color:#2A7F8C; --bs-btn-hover-bg:#20636E; --bs-btn-hover-border-color:#20636E; --bs-btn-active-bg:#1B535C; --bs-btn-active-border-color:#1B535C; --bs-btn-disabled-bg:#2A7F8C; --bs-btn-disabled-border-color:#2A7F8C; }
 .btn-secondary{ --bs-btn-bg:#55645F; --bs-btn-border-color:#55645F; --bs-btn-hover-bg:#414D49; --bs-btn-hover-border-color:#414D49; --bs-btn-active-bg:#333D3A; --bs-btn-active-border-color:#333D3A; --bs-btn-disabled-bg:#55645F; --bs-btn-disabled-border-color:#55645F; }
 .btn-outline-primary{ --bs-btn-color:var(--color-brand); --bs-btn-border-color:var(--color-brand); --bs-btn-hover-bg:var(--color-brand); --bs-btn-hover-border-color:var(--color-brand); --bs-btn-active-bg:var(--color-brand); --bs-btn-active-border-color:var(--color-brand); }
 .btn-outline-danger{ --bs-btn-color:var(--color-negative); --bs-btn-border-color:var(--color-negative); --bs-btn-hover-bg:var(--color-negative); --bs-btn-hover-border-color:var(--color-negative); --bs-btn-active-bg:var(--color-negative); --bs-btn-active-border-color:var(--color-negative); }
+
+/* Bootstrap fuerza texto negro en .text-bg-warning/.text-bg-info (asume colores claros);
+   con nuestra paleta esos fondos son oscuros, así que el texto debe ser blanco como los demás badges. */
+.text-bg-warning, .text-bg-info{ color:#fff !important; }
 
 /* =========================================================
    Badges de alerta pulsantes
@@ -224,6 +239,21 @@ main.app-main, main.container{ max-width: 640px; }
   border-radius: var(--bs-border-radius-sm); padding:.4rem .6rem; display:inline-flex;
 }
 .voice-status.is-processed i{ color: var(--color-positive); }
+
+/* =========================================================
+   Formularios en línea (registrar abono / pago)
+   Flexbox en vez de grid col-md-*: el ancho se ajusta al campo,
+   no al breakpoint del viewport (nuestro .container va a 640px
+   incluso en desktop, así que col-md-* nunca refleja el ancho real).
+   ========================================================= */
+.form-inline{
+  display:flex; flex-wrap:wrap; gap:.85rem 1rem; align-items:flex-end;
+}
+.form-inline-field{ flex:1 1 150px; min-width:0; }
+.form-inline-field-grow{ flex:2 1 200px; }
+.form-inline-field-sm{ flex:1 1 110px; }
+.form-inline-field-btn{ flex:0 0 auto; }
+.form-inline-field-btn .btn{ white-space:nowrap; padding-left:1.25rem; padding-right:1.25rem; }
 
 /* =========================================================
    Tablas -> listas de tarjetas en mobile

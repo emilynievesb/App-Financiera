@@ -2,16 +2,22 @@ const DIAS_ALERTA_VENCIMIENTO_DASH = 7;
 
 document.addEventListener('DOMContentLoaded', ()=>{
   const f = hoy();
-  const ventasHoy = sum(getAll(DB.VENTAS).filter(v=>v.fecha===f), 'total');
-  const comprasHoy = sum(getAll(DB.COMPRAS).filter(c=>c.fecha===f), 'total');
-  const gastosHoy = sum(getAll(DB.GASTOS).filter(g=>g.fecha===f), 'monto');
+  // "Saldo del día" es plata que realmente entró/salió hoy - igual que Flujo de Caja, se excluye
+  // crédito (todavía no es dinero real) para no mezclar ventas por cobrar con caja disponible.
+  const noEsCredito = x => tipoFormaPago(x.metodoPago)!=='credito';
+  const ventasHoy = sum(getAll(DB.VENTAS).filter(v=>v.fecha===f).filter(noEsCredito), 'total');
+  const comprasHoy = sum(getAll(DB.COMPRAS).filter(c=>c.fecha===f).filter(noEsCredito), 'total');
+  const gastosHoy = sum(getAll(DB.GASTOS).filter(g=>g.fecha===f).filter(noEsCredito), 'monto');
   const egresosHoy = comprasHoy + gastosHoy;
   const saldoHoy = ventasHoy - egresosHoy;
 
   document.getElementById('sumIngresos').textContent = formatoMoneda(ventasHoy);
   document.getElementById('sumEgresos').textContent = formatoMoneda(egresosHoy);
   document.getElementById('sumSaldo').textContent = formatoMoneda(saldoHoy);
-  document.getElementById('sumSaldo').className = 'summary-tile-value ' + (saldoHoy>=0 ? '' : 'text-warning-emphasis');
+  // Texto siempre blanco (buen contraste en los dos casos); lo que cambia es el fondo del tile,
+  // no el color del texto - un color de texto "warning" sobre este fondo verde oscuro casi no
+  // se distinguía (ambos tonos con luminancia similar).
+  document.getElementById('sumSaldo').closest('.summary-tile').classList.toggle('is-negative', saldoHoy<0);
 
   const teDeben = sum(listarCuentasPorCobrar(f).map(x=>({v:x.saldo})), 'v');
   const debes = sum(listarCuentasPorPagarProveedores(f).map(x=>({v:x.saldo})), 'v') + sum(listarGastosPendientes(f).map(x=>({v:x.saldo})), 'v');

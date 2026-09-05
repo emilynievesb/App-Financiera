@@ -1,19 +1,39 @@
-const COLOR_INGRESOS = '#1C9A6C', COLOR_COMPRAS = '#C7920B', COLOR_GASTOS = '#C5432B';
+const COLOR_INGRESOS = '#1C9A6C', COLOR_COSTO = '#C7920B', COLOR_GASTOS = '#C5432B';
 
-function calcularFlujoCaja(desde, hasta){
-  const enEf = arr => arr.filter(x=>enRango(x.fecha, desde, hasta) && x.metodoPago==='efectivo');
-  const ingresos = sum(enEf(getAll(DB.VENTAS)),'total') + sum(enEf(getAll(DB.ABONOS_CLIENTES)),'monto');
-  const salidasCompras = sum(enEf(getAll(DB.COMPRAS)),'total') + sum(enEf(getAll(DB.PAGOS_PROVEEDORES)),'monto');
-  const salidasGastos = sum(enEf(getAll(DB.GASTOS)),'monto') + sum(enEf(getAll(DB.PAGOS_GASTOS)),'monto');
+// Flujo de Caja: mide movimiento real de dinero. No usa costo de venta: aquí el criterio es caja,
+// no rentabilidad. `filtroFn` decide qué transacciones cuentan (por tipo de forma de pago, o por
+// "cualquiera que no sea crédito") - la comparten la vista Completa (un solo total) y la Detallada
+// (Caja efectivo físico vs. Cuentas dinero digital).
+function totalesCaja(desde, hasta, filtroFn){
+  const enRangoFecha = arr => arr.filter(x=>enRango(x.fecha, desde, hasta)).filter(filtroFn);
+  const ingresos = sum(enRangoFecha(getAll(DB.VENTAS)),'total') + sum(enRangoFecha(getAll(DB.ABONOS_CLIENTES)),'monto');
+  const salidasCompras = sum(enRangoFecha(getAll(DB.COMPRAS)),'total') + sum(enRangoFecha(getAll(DB.PAGOS_PROVEEDORES)),'monto');
+  const salidasGastos = sum(enRangoFecha(getAll(DB.GASTOS)),'monto') + sum(enRangoFecha(getAll(DB.PAGOS_GASTOS)),'monto');
   return { ingresos, salidasCompras, salidasGastos, total: ingresos - salidasCompras - salidasGastos };
 }
+// Vista Completa: dinero recibido y pagado en general, sin importar la forma de pago (efectivo,
+// transferencia, tarjeta, Nequi...). Crédito queda fuera - todavía no es plata que entró o salió.
+function calcularFlujoCajaGeneral(desde, hasta){
+  return totalesCaja(desde, hasta, x=>tipoFormaPago(x.metodoPago)!=='credito');
+}
+// Vista Detallada: separado en Caja (efectivo físico) y Cuentas (cualquier forma de pago digital
+// ya recibida/pagada) - para poder hacer arqueo de caja sin mezclar lo físico con lo digital.
+function calcularFlujoCaja(desde, hasta){
+  const caja = totalesCaja(desde, hasta, x=>tipoFormaPago(x.metodoPago)==='efectivo');
+  const cuentas = totalesCaja(desde, hasta, x=>tipoFormaPago(x.metodoPago)==='digital');
+  return { caja, cuentas, total: caja.total + cuentas.total };
+}
 
+// Estado de Resultados: Ventas − Costo de lo efectivamente vendido − Gastos = Utilidad. Usa el
+// costo de venta (congelado por venta al costo promedio ponderado, ver registrarVenta en
+// storage.js), no el total de Compras - Compras incluye mercancía que aún no se vendió.
 function calcularEstadoResultados(desde, hasta){
   const enR = arr => arr.filter(x=>enRango(x.fecha, desde, hasta));
-  const totalIngresos = sum(enR(getAll(DB.VENTAS)),'total');
-  const totalCompras = sum(enR(getAll(DB.COMPRAS)),'total');
+  const ventas = enR(getAll(DB.VENTAS));
+  const totalIngresos = sum(ventas,'total');
+  const totalCosto = sum(ventas,'costoTotal');
   const totalGastos = sum(enR(getAll(DB.GASTOS)),'monto');
-  return { totalIngresos, totalCompras, totalGastos, utilidad: totalIngresos - totalCompras - totalGastos };
+  return { totalIngresos, totalCosto, totalGastos, utilidad: totalIngresos - totalCosto - totalGastos };
 }
 
 document.addEventListener('DOMContentLoaded', ()=>{
@@ -25,13 +45,21 @@ document.addEventListener('DOMContentLoaded', ()=>{
     return periodo==='dia' ? rangoDia(fechaRef.value) : periodo==='mes' ? rangoMes(fechaRef.value) : rangoSemana(fechaRef.value);
   }
 
+  function pintarBloqueCaja(prefijo, bloque){
+    document.getElementById(prefijo+'Ingresos').textContent = formatoMoneda(bloque.ingresos);
+    document.getElementById(prefijo+'Compras').textContent = '-'+formatoMoneda(bloque.salidasCompras);
+    document.getElementById(prefijo+'Gastos').textContent = '-'+formatoMoneda(bloque.salidasGastos);
+    document.getElementById(prefijo+'Total').className = 'text-end amount fs-5 ' + (bloque.total>=0 ? 'amount-positive' : 'amount-negative');
+    animarNumero(document.getElementById(prefijo+'Total'), bloque.total);
+  }
   function refrescarFlujoCaja(rango){
+    pintarBloqueCaja('fcGeneral', calcularFlujoCajaGeneral(rango.desde, rango.hasta));
+
     const fc = calcularFlujoCaja(rango.desde, rango.hasta);
-    document.getElementById('fcIngresos').textContent = formatoMoneda(fc.ingresos);
-    document.getElementById('fcCompras').textContent = '-'+formatoMoneda(fc.salidasCompras);
-    document.getElementById('fcGastos').textContent = '-'+formatoMoneda(fc.salidasGastos);
-    document.getElementById('fcTotal').className = 'text-end amount fs-5 ' + (fc.total>=0 ? 'amount-positive' : 'amount-negative');
-    animarNumero(document.getElementById('fcTotal'), fc.total);
+    pintarBloqueCaja('fcCaja', fc.caja);
+    pintarBloqueCaja('fcCuentas', fc.cuentas);
+    document.getElementById('fcTotalGeneral').className = 'text-end amount fs-5 ' + (fc.total>=0 ? 'amount-positive' : 'amount-negative');
+    animarNumero(document.getElementById('fcTotalGeneral'), fc.total);
   }
 
   function refrescarCartera(hasta){
@@ -54,10 +82,25 @@ document.addEventListener('DOMContentLoaded', ()=>{
   function refrescarResultados(rango){
     const er = calcularEstadoResultados(rango.desde, rango.hasta);
     document.getElementById('erIngresos').textContent = formatoMoneda(er.totalIngresos);
-    document.getElementById('erCompras').textContent = '-'+formatoMoneda(er.totalCompras);
+    document.getElementById('erCosto').textContent = '-'+formatoMoneda(er.totalCosto);
     document.getElementById('erGastos').textContent = '-'+formatoMoneda(er.totalGastos);
     document.getElementById('erUtilidad').className = 'text-end amount fs-5 ' + (er.utilidad>=0 ? 'amount-positive' : 'amount-negative');
     animarNumero(document.getElementById('erUtilidad'), er.utilidad);
+  }
+
+  function refrescarKardex(rango){
+    const filas = calcularKardex(rango.desde, rango.hasta);
+    document.getElementById('tablaKardex').innerHTML = filas.length
+      ? filas.map(f=>`<tr>
+          <td data-label="Código" class="text-end amount">${f.producto.codigo}</td>
+          <td class="td-titulo">${esc(f.producto.nombre)}</td>
+          <td data-label="Entradas" class="text-end amount amount-positive">${f.entradas}</td>
+          <td data-label="Salidas" class="text-end amount amount-negative">${f.salidas}</td>
+          <td data-label="Saldo" class="text-end amount">${f.saldo}</td>
+          <td data-label="Valor saldo" class="text-end amount">${formatoMoneda(f.valor)}</td></tr>`).join('')
+      : '<tr class="fila-vacia"><td colspan="6" class="estado-vacio"><i class="bi bi-box-seam"></i>Aún no hay productos.</td></tr>';
+    document.getElementById('kardexSaldoTotal').textContent = filas.reduce((s,f)=>s+f.saldo,0);
+    document.getElementById('kardexValorTotal').textContent = formatoMoneda(filas.reduce((s,f)=>s+f.valor,0));
   }
 
   let chartVentas, chartComparativo, chartMetodos;
@@ -79,17 +122,18 @@ document.addEventListener('DOMContentLoaded', ()=>{
     if(chartComparativo) chartComparativo.destroy();
     chartComparativo = new Chart(ctxC, {
       type:'bar',
-      data:{ labels:['Ingresos','Compras','Gastos'], datasets:[{ data:[er.totalIngresos, er.totalCompras, er.totalGastos], backgroundColor:[COLOR_INGRESOS, COLOR_COMPRAS, COLOR_GASTOS] }] },
+      data:{ labels:['Ingresos','Costo de venta','Gastos'], datasets:[{ data:[er.totalIngresos, er.totalCosto, er.totalGastos], backgroundColor:[COLOR_INGRESOS, COLOR_COSTO, COLOR_GASTOS] }] },
       options:{ animation:{ duration:700, easing:'easeOutQuart' }, plugins:{legend:{display:false}} }
     });
 
     const ventasRango = getAll(DB.VENTAS).filter(v=>enRango(v.fecha, rango.desde, rango.hasta));
     const rm = resumenPorMetodo(ventasRango, 'total');
+    const PALETA_METODOS = ['#0B6E4F','#7C5CBF','#2A7F8C','#C7920B','#C5432B','#55645F'];
     const ctxM = document.getElementById('chartMetodos');
     if(chartMetodos) chartMetodos.destroy();
     chartMetodos = new Chart(ctxM, {
       type:'pie',
-      data:{ labels:['Efectivo','Crédito','Transferencia','Tarjeta'], datasets:[{ data:[rm.efectivo, rm.credito, rm.transferencia, rm.tarjeta], backgroundColor:['#55645F','#C7920B','#2A7F8C','#0B6E4F'] }] },
+      data:{ labels:Object.keys(rm), datasets:[{ data:Object.values(rm), backgroundColor: Object.keys(rm).map((_,i)=>PALETA_METODOS[i%PALETA_METODOS.length]) }] },
       options:{ animation:{ duration:700, easing:'easeOutQuart' } }
     });
   }
@@ -100,8 +144,17 @@ document.addEventListener('DOMContentLoaded', ()=>{
     refrescarFlujoCaja(rango);
     refrescarCartera(fechaRef.value);
     refrescarResultados(rango);
+    refrescarKardex(rango);
     refrescarGraficos(rango);
   }
+
+  document.querySelectorAll('[data-vista-caja]').forEach(b=>b.addEventListener('click', ()=>{
+    document.querySelectorAll('[data-vista-caja]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const detallada = b.dataset.vistaCaja==='detallada';
+    document.getElementById('vistaCajaCompleta').classList.toggle('d-none', detallada);
+    document.getElementById('vistaCajaDetallada').classList.toggle('d-none', !detallada);
+  }));
 
   document.querySelectorAll('[data-periodo]').forEach(b=>b.addEventListener('click', ()=>{
     document.querySelectorAll('[data-periodo]').forEach(x=>x.classList.remove('active'));

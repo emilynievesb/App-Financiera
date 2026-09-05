@@ -1,4 +1,4 @@
-// Entrada de datos por voz (Web Speech API) — complemento opcional a los formularios, nunca los reemplaza.
+// Entrada de datos por voz (Web Speech API) - complemento opcional a los formularios, nunca los reemplaza.
 
 function vozSoportada(){ return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
 
@@ -33,13 +33,18 @@ function activarBotonVoz(boton, estadoEl, onResultado){
   rec.onend = ()=>{ boton.classList.remove('escuchando'); };
 }
 
+// Quita tildes para comparar sin importar si el usuario (o el reconocimiento de voz) las puso o no.
+function sinTildes(s){ return s.normalize('NFD').replace(/[̀-ͯ]/g,''); }
+
 function parseVoz(texto){
-  const t = texto.toLowerCase();
+  const t = sinTildes(texto.toLowerCase());
   let metodoPago = null;
-  if(/efectivo|contado/.test(t)) metodoPago='efectivo';
-  else if(/cr[eé]dito/.test(t)) metodoPago='credito';
-  else if(/transferencia/.test(t)) metodoPago='transferencia';
-  else if(/tarjeta/.test(t)) metodoPago='tarjeta';
+  const forma = listarFormasPago().find(f=> t.includes(sinTildes(f.nombre.toLowerCase())));
+  if(forma) metodoPago = forma.nombre;
+  else if(/contado/.test(t)){
+    const efectivo = listarFormasPago().find(f=>f.tipo==='efectivo');
+    if(efectivo) metodoPago = efectivo.nombre;
+  }
 
   const mMil = t.match(/(\d+(?:[.,]\d+)?)\s*mil/);
   const mNum = t.match(/(\d+(?:[.,]\d+)?)/);
