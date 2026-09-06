@@ -23,9 +23,10 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   activarBotonVoz(document.getElementById('btnVoz'), document.getElementById('estadoVoz'), r=>{
+    if(r.concepto) formGasto.concepto.value = r.concepto;
     if(r.monto) fijarValorMoneda(inpMonto, r.monto);
     if(r.metodoPago) selMetodo.value = r.metodoPago;
-  });
+  }, {producto:false});
 
   // ---- Pagos de gastos pendientes ----
   const formPago = document.getElementById('formPago');

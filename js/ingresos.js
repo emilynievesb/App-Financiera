@@ -60,8 +60,14 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   activarBotonVoz(document.getElementById('btnVoz'), document.getElementById('estadoVoz'), r=>{
+    if(r.productoId){
+      selProducto.value = r.productoId;
+      fijarValorMoneda(inpPrecio, ultimoPrecioVenta(r.productoId));
+    }
+    if(r.cantidad) formVenta.cantidad.value = r.cantidad;
     if(r.monto) fijarValorMoneda(inpPrecio, r.monto);
     if(r.metodoPago) selMetodo.value = r.metodoPago;
+    if(r.persona) inpCliente.value = r.persona;
   });
 
   // ---- Abonos ----

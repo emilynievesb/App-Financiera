@@ -58,8 +58,15 @@ document.addEventListener('DOMContentLoaded', ()=>{
   });
 
   activarBotonVoz(document.getElementById('btnVoz'), document.getElementById('estadoVoz'), r=>{
+    if(r.productoId){
+      selProducto.value = r.productoId;
+      const opt = selProducto.selectedOptions[0];
+      if(opt && opt.dataset.costo) fijarValorMoneda(inpCosto, opt.dataset.costo);
+    }
+    if(r.cantidad) formCompra.cantidad.value = r.cantidad;
     if(r.monto) fijarValorMoneda(inpCosto, r.monto);
     if(r.metodoPago) selMetodo.value = r.metodoPago;
+    if(r.persona) inpProveedor.value = r.persona;
   });
 
   // ---- Pagos a proveedores ----
